@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>مشغل فيديو احترافي مع حواف وأزرار داخلية</title>
+<style>
+  body {
+    background: #121212;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  .player-container {
+    position: relative;
+    width: 90%;
+    max-width: 720px;
+    border-radius: 16px;
+    box-shadow: 0 0 25px rgba(0, 150, 255, 0.7);
+    overflow: hidden;
+    background: #0a0f19;
+  }
+  video {
+    width: 100%;
+    border-radius: 16px 16px 0 0;
+    background: black;
+    display: block;
+  }
+  .controls-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #111827;
+    padding: 12px 20px;
+    border-radius: 0 0 16px 16px;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+  .control-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  label {
+    color: #4fd1c5;
+    font-weight: 600;
+    user-select: none;
+  }
+  select {
+    background: #1a202c;
+    color: #a0aec0;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.25s ease;
+  }
+  select:hover {
+    background: #2d3748;
+  }
+  button {
+    background: #38b2ac;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 24px;
+    font-weight: 700;
+    font-size: 17px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(56,178,172,0.6);
+    transition: background 0.3s ease, transform 0.1s ease;
+    user-select: none;
+  }
+  button:hover {
+    background: #319795;
+  }
+  button:active {
+    transform: scale(0.95);
+  }
+  @media (max-width: 500px) {
+    .controls-bar {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .control-group, button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="player-container">
+  <video id="video" controls preload="metadata" playsinline></video>
+  
+  <div class="controls-bar">
+    <div class="control-group">
+      <label for="server-select">السيرفر</label>
+      <select id="server-select" aria-label="اختيار السيرفر">
+        <option value="1">سيرفر 1</option>
+        <option value="2">سيرفر 2</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <label for="quality-select">الجودة</label>
+      <select id="quality-select" aria-label="اختيار الجودة">
+        <option value="720p">720p</option>
+        <option value="480p">480p</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <button id="play-btn" aria-label="تشغيل الفيديو">▶ تشغيل</button>
+      <button id="pause-btn" aria-label="إيقاف الفيديو">⏸ إيقاف</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script>
+  const video = document.getElementById('video');
+  const serverSelect = document.getElementById('server-select');
+  const qualitySelect = document.getElementById('quality-select');
+  const playBtn = document.getElementById('play-btn');
+  const pauseBtn = document.getElementById('pause-btn');
+
+  const videoSources = {
+    "1": {
+      "720p": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "480p": "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8"
+    },
+    "2": {
+      "720p": "https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8",
+      "480p": "https://mnmedias.api.telequebec.tv/m3u8/29880.m3u8"
+    }
+  };
+
+  let hls;
+
+  function loadVideo() {
+    const server = serverSelect.value;
+    const quality = qualitySelect.value;
+    const src = videoSources[server][quality];
+    const currentTime = video.currentTime;
+    const isPlaying = !video.paused && !video.ended;
+
+    if(hls) {
+      hls.destroy();
+      hls = null;
+    }
+
+    if(video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = src;
+      video.load();
+      if(isPlaying) video.play();
+      video.currentTime = currentTime;
+    } else if(Hls.isSupported()) {
+      hls = new Hls();
+      hls.loadSource(src);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, function() {
+        if(currentTime > 0) video.currentTime = currentTime;
+        if(isPlaying) video.play();
+      });
+    } else {
+      alert('عذراً، المتصفح لا يدعم تشغيل هذا الفيديو.');
+    }
+  }
+
+  serverSelect.addEventListener('change', loadVideo);
+  qualitySelect.addEventListener('change', loadVideo);
+  playBtn.addEventListener('click', () => video.play());
+  pauseBtn.addEventListener('click', () => video.pause());
+
+  loadVideo();
+</script>
+
+</body>
+</html>
