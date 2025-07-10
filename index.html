@@ -1,213 +1,416 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>OSM STREAM</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600&display=swap" rel="stylesheet">
-  <style>
-    body {
-      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-      margin: 0;
-      font-family: 'Cairo', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
-      color: #ffffff;
-    }
-
-    .top-bar {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      margin-bottom: 20px;
-    }
-
-    .top-bar img {
-      width: 50px;
-      height: 50px;
-      border-radius: 12px;
-    }
-
-    .top-bar h1 {
-      font-size: 24px;
-      margin: 0;
-    }
-
-    .player-container {
-      background: #0b1320;
-      border-radius: 20px;
-      box-shadow: 0 0 30px rgba(0, 200, 255, 0.3);
-      overflow: hidden;
-      width: 100%;
-      max-width: 750px;
-    }
-
-    video {
-      width: 100%;
-      background: black;
-      display: block;
-    }
-
-    .controls-bar {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      padding: 15px;
-      background: #111827;
-      gap: 10px;
-    }
-
-    .control-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex: 1;
-      min-width: 120px;
-    }
-
-    label {
-      font-weight: bold;
-      color: #4fd1c5;
-    }
-
-    select {
-      background: #1a202c;
-      color: #ffffff;
-      border: 1px solid #4fd1c5;
-      border-radius: 8px;
-      padding: 8px;
-      font-size: 14px;
-      transition: 0.3s ease;
-    }
-
-    select:hover {
-      background: #2d3748;
-    }
-
-    button {
-      background: #38b2ac;
-      border: none;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 10px;
-      font-size: 16px;
-      font-weight: bold;
-      box-shadow: 0 6px 12px rgba(56, 178, 172, 0.4);
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    button:hover {
-      background-color: #2c7a7b;
-      transform: scale(1.05);
-    }
-
-    button:active {
-      transform: scale(0.95);
-    }
-
-    @media (max-width: 600px) {
-      .controls-bar {
-        flex-direction: column;
-        align-items: stretch;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مشغل فيديو متعدد السيرفرات | Multi-Server HLS Player</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --text-color: #333;
+            --bg-color: #f5f5f5;
+            --control-bg: rgba(0, 0, 0, 0.7);
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #222;
+            margin: 0;
+            padding: 20px;
+            color: white;
+        }
+        
+        .player-container {
+            max-width: 900px;
+            margin: 0 auto;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #000;
+        }
+        
+        #video-player {
+            width: 100%;
+            display: block;
+        }
+        
+        .controls {
+            background: var(--control-bg);
+            padding: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .progress-container {
+            width: 100%;
+            height: 10px;
+            background: #444;
+            cursor: pointer;
+            margin-bottom: 5px;
+            border-radius: 5px;
+        }
+        
+        #progress-bar {
+            height: 100%;
+            background: var(--primary-color);
+            border-radius: 5px;
+            width: 0%;
+        }
+        
+        button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .time {
+            font-family: monospace;
+            margin: 0 10px;
+        }
+        
+        .quality-selector,
+        .server-selector {
+            margin-left: 10px;
+        }
+        
+        select {
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: 1px solid #555;
+            padding: 5px;
+            border-radius: 4px;
+            min-width: 120px;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 18px;
+        }
+        
+        .player-wrapper {
+            position: relative;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+        
+        .server-info {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-left: auto;
+        }
+    </style>
 </head>
 <body>
-
-  <div class="top-bar">
-    <img src="https://k.top4top.io/p_3478n67wv1.png" alt="Logo">
-    <h1>OSM STREAM</h1>
-  </div>
-
-  <div class="player-container">
-    <video id="video" controls preload="metadata" playsinline></video>
-
-    <div class="controls-bar">
-      <div class="control-group">
-        <label for="server-select">السيرفر</label>
-        <select id="server-select">
-          <option value="1">سيرفر 1</option>
-          <option value="2">سيرفر 2</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <label for="quality-select">الجودة</label>
-        <select id="quality-select">
-          <option value="720p">720p</option>
-          <option value="480p">480p</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <button id="play-btn">▶ تشغيل</button>
-        <button id="pause-btn">⏸ إيقاف</button>
-      </div>
+    <div class="player-container">
+        <div class="player-wrapper">
+            <video id="video-player"></video>
+            <div class="loading" id="loading-message">جاري التحميل...</div>
+            <div class="error-message" id="error-message"></div>
+        </div>
+        
+        <div class="controls">
+            <div class="progress-container" id="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            
+            <button id="play-pause-btn">▶</button>
+            <button id="mute-btn">🔊</button>
+            <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="1">
+            
+            <span class="time" id="current-time">00:00:00</span>
+            <span>/</span>
+            <span class="time" id="duration">00:00:00</span>
+            
+            <div class="quality-selector">
+                <select id="quality-selector">
+                    <option value="auto">جودة تلقائية</option>
+                </select>
+            </div>
+            
+            <div class="server-selector">
+                <select id="server-selector">
+                    <option value="">اختر سيرفر...</option>
+                </select>
+            </div>
+            
+            <div class="server-info" id="server-info">غير متصل</div>
+            
+            <button id="fullscreen-btn">⛶</button>
+        </div>
     </div>
-  </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <script>
-    const video = document.getElementById('video');
-    const serverSelect = document.getElementById('server-select');
-    const qualitySelect = document.getElementById('quality-select');
-    const playBtn = document.getElementById('play-btn');
-    const pauseBtn = document.getElementById('pause-btn');
-
-    const videoSources = {
-      "1": {
-        "720p": "http://het104a.4rouwanda-shop.store/live/918454578001/index.m3u8?t=VjVKc6bM5AxWCkCuswyAWw&e=1752148716",
-        "480p": "http://het104a.4rouwanda-shop.store/live/918454578001/index.m3u8?t=VjVKc6bM5AxWCkCuswyAWw&e=1752148716"
-      },
-      "2": {
-        "720p": "http://het104a.4rouwanda-shop.store/live/918454578001/index.m3u8?t=VjVKc6bM5AxWCkCuswyAWw&e=1752148716",
-        "480p": "http://het104a.4rouwanda-shop.store/live/918454578001/index.m3u8?t=VjVKc6bM5AxWCkCuswyAWw&e=1752148716"
-      }
-    };
-
-    let hls;
-
-    function loadVideo() {
-      const server = serverSelect.value;
-      const quality = qualitySelect.value;
-      const src = videoSources[server][quality];
-      const currentTime = video.currentTime;
-      const isPlaying = !video.paused && !video.ended;
-
-      if (hls) {
-        hls.destroy();
-        hls = null;
-      }
-
-      if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = src;
-        video.load();
-        if (isPlaying) video.play();
-        video.currentTime = currentTime;
-      } else if (Hls.isSupported()) {
-        hls = new Hls();
-        hls.loadSource(src);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, function () {
-          if (currentTime > 0) video.currentTime = currentTime;
-          if (isPlaying) video.play();
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // العناصر الرئيسية
+            const video = document.getElementById('video-player');
+            const playPauseBtn = document.getElementById('play-pause-btn');
+            const muteBtn = document.getElementById('mute-btn');
+            const volumeSlider = document.getElementById('volume-slider');
+            const progressBar = document.getElementById('progress-bar');
+            const progressContainer = document.getElementById('progress-container');
+            const currentTimeElement = document.getElementById('current-time');
+            const durationElement = document.getElementById('duration');
+            const qualitySelector = document.getElementById('quality-selector');
+            const serverSelector = document.getElementById('server-selector');
+            const serverInfo = document.getElementById('server-info');
+            const fullscreenBtn = document.getElementById('fullscreen-btn');
+            const loadingMessage = document.getElementById('loading-message');
+            const errorMessage = document.getElementById('error-message');
+            
+            // متغيرات المشغل
+            let hls = null;
+            let isPlaying = false;
+            let isMuted = false;
+            let currentVolume = 1;
+            let currentServer = null;
+            
+            // قائمة السيرفرات (يمكنك إضافة سيرفراتك هنا)
+            const servers = [
+                {
+                    name: "سيرفر 1 (تجريبي)",
+                    url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+                    type: "hls"
+                },
+                {
+                    name: "سيرفر 2 (تجريبي)",
+                    url: "https://bitdash-a.akamaihd.net/content/MI201109210084_1/m3u8s/f08e80da-bf1d-4e3d-8899-f0f6155f6efa.m3u8",
+                    type: "hls"
+                },
+                {
+                    name: "سيرفر 3 (MP4)",
+                    url: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                    type: "mp4"
+                }
+            ];
+            
+            // تهيئة قائمة السيرفرات
+            function initServerList() {
+                servers.forEach((server, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.text = server.name;
+                    serverSelector.appendChild(option);
+                });
+            }
+            
+            // تهيئة المشغل
+            function initPlayer(streamUrl, type) {
+                // إيقاف أي تشغيل سابق
+                if (hls) {
+                    hls.destroy();
+                }
+                
+                loadingMessage.style.display = 'block';
+                errorMessage.style.display = 'none';
+                video.pause();
+                isPlaying = false;
+                playPauseBtn.textContent = '▶';
+                
+                if (type === 'hls' && Hls.isSupported()) {
+                    hls = new Hls({
+                        maxBufferLength: 30,
+                        maxMaxBufferLength: 600,
+                        enableWorker: true
+                    });
+                    
+                    hls.loadSource(streamUrl);
+                    hls.attachMedia(video);
+                    
+                    hls.on(Hls.Events.MANIFEST_PARSED, function(event, data) {
+                        // إضافة خيارات الجودة
+                        if (data.levels && data.levels.length > 1) {
+                            qualitySelector.innerHTML = '<option value="auto">جودة تلقائية</option>';
+                            data.levels.forEach((level, index) => {
+                                const option = document.createElement('option');
+                                option.value = index;
+                                option.text = `${level.height}p (${Math.round(level.bitrate / 1000)} kbps)`;
+                                qualitySelector.appendChild(option);
+                            });
+                        }
+                        
+                        loadingMessage.style.display = 'none';
+                        video.play();
+                        isPlaying = true;
+                        playPauseBtn.textContent = '❚❚';
+                        serverInfo.textContent = `متصل بـ: ${currentServer.name}`;
+                    });
+                    
+                    hls.on(Hls.Events.ERROR, function(event, data) {
+                        if (data.fatal) {
+                            switch(data.type) {
+                                case Hls.ErrorTypes.NETWORK_ERROR:
+                                    errorMessage.textContent = 'خطأ في الشبكة، جاري إعادة المحاولة...';
+                                    hls.startLoad();
+                                    break;
+                                case Hls.ErrorTypes.MEDIA_ERROR:
+                                    errorMessage.textContent = 'خطأ في الوسائط، جاري إصلاح...';
+                                    hls.recoverMediaError();
+                                    break;
+                                default:
+                                    errorMessage.textContent = 'خطأ غير قابل للاسترداد، يرجى تحديث الصفحة';
+                                    break;
+                            }
+                            errorMessage.style.display = 'block';
+                            loadingMessage.style.display = 'none';
+                            serverInfo.textContent = 'خطأ في الاتصال';
+                        }
+                    });
+                } else if (video.canPlayType('application/vnd.apple.mpegurl') && type === 'hls') {
+                    // دعم Safari
+                    video.src = streamUrl;
+                    video.addEventListener('loadedmetadata', function() {
+                        loadingMessage.style.display = 'none';
+                        video.play();
+                        isPlaying = true;
+                        playPauseBtn.textContent = '❚❚';
+                        serverInfo.textContent = `متصل بـ: ${currentServer.name}`;
+                    });
+                } else if (type === 'mp4') {
+                    // تشغيل ملفات MP4 مباشرة
+                    video.src = streamUrl;
+                    video.addEventListener('loadedmetadata', function() {
+                        loadingMessage.style.display = 'none';
+                        video.play();
+                        isPlaying = true;
+                        playPauseBtn.textContent = '❚❚';
+                        serverInfo.textContent = `متصل بـ: ${currentServer.name}`;
+                        qualitySelector.innerHTML = '<option value="auto">جودة واحدة</option>';
+                    });
+                } else {
+                    errorMessage.textContent = 'المتصفح لا يدعم تشغيل هذا النوع من الفيديوهات';
+                    errorMessage.style.display = 'block';
+                    loadingMessage.style.display = 'none';
+                    serverInfo.textContent = 'غير مدعوم';
+                }
+            }
+            
+            // التحكم في التشغيل
+            playPauseBtn.addEventListener('click', function() {
+                if (isPlaying) {
+                    video.pause();
+                    playPauseBtn.textContent = '▶';
+                } else {
+                    video.play();
+                    playPauseBtn.textContent = '❚❚';
+                }
+                isPlaying = !isPlaying;
+            });
+            
+            // التحكم في الصوت
+            muteBtn.addEventListener('click', function() {
+                if (isMuted) {
+                    video.volume = currentVolume;
+                    muteBtn.textContent = '🔊';
+                } else {
+                    currentVolume = video.volume;
+                    video.volume = 0;
+                    muteBtn.textContent = '🔇';
+                }
+                isMuted = !isMuted;
+                volumeSlider.value = video.volume;
+            });
+            
+            volumeSlider.addEventListener('input', function() {
+                video.volume = this.value;
+                if (this.value == 0) {
+                    isMuted = true;
+                    muteBtn.textContent = '🔇';
+                } else {
+                    isMuted = false;
+                    muteBtn.textContent = '🔊';
+                }
+            });
+            
+            // شريط التقدم
+            video.addEventListener('timeupdate', function() {
+                const currentTime = video.currentTime;
+                const duration = video.duration;
+                
+                if (!isNaN(duration)) {
+                    const progressPercent = (currentTime / duration) * 100;
+                    progressBar.style.width = `${progressPercent}%`;
+                    
+                    // تحديث الوقت
+                    currentTimeElement.textContent = formatTime(currentTime);
+                    durationElement.textContent = formatTime(duration);
+                }
+            });
+            
+            progressContainer.addEventListener('click', function(e) {
+                const width = this.clientWidth;
+                const clickX = e.offsetX;
+                const duration = video.duration;
+                
+                video.currentTime = (clickX / width) * duration;
+            });
+            
+            // اختيار الجودة
+            qualitySelector.addEventListener('change', function() {
+                if (hls) {
+                    if (this.value === 'auto') {
+                        hls.currentLevel = -1;
+                    } else {
+                        hls.currentLevel = parseInt(this.value);
+                    }
+                }
+            });
+            
+            // اختيار السيرفر
+            serverSelector.addEventListener('change', function() {
+                if (this.value !== '') {
+                    const selectedServer = servers[this.value];
+                    currentServer = selectedServer;
+                    initPlayer(selectedServer.url, selectedServer.type);
+                }
+            });
+            
+            // وضع ملء الشاشة
+            fullscreenBtn.addEventListener('click', function() {
+                if (video.requestFullscreen) {
+                    video.requestFullscreen();
+                } else if (video.webkitRequestFullscreen) {
+                    video.webkitRequestFullscreen();
+                } else if (video.msRequestFullscreen) {
+                    video.msRequestFullscreen();
+                }
+            });
+            
+            // تنسيق الوقت
+            function formatTime(seconds) {
+                const h = Math.floor(seconds / 3600);
+                const m = Math.floor((seconds % 3600) / 60);
+                const s = Math.floor(seconds % 60);
+                
+                return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+            
+            // بدء التهيئة
+            initServerList();
         });
-      } else {
-        alert('عذراً، المتصفح لا يدعم تشغيل هذا الفيديو.');
-      }
-    }
-
-    serverSelect.addEventListener('change', loadVideo);
-    qualitySelect.addEventListener('change', loadVideo);
-    playBtn.addEventListener('click', () => video.play());
-    pauseBtn.addEventListener('click', () => video.pause());
-
-    loadVideo();
-  </script>
-
+    </script>
 </body>
 </html>
