@@ -1,48 +1,18 @@
-
-<html>
-<head>
-  <!-- Cloudinary player CSS -->
-  <link href="https://unpkg.com/cloudinary-video-player/dist/cld-video-player.min.css" rel="stylesheet"></link>
-
-  <!-- Cloudinary Core JS -->
-  <script src="https://unpkg.com/cloudinary-core@2.8.2/cloudinary-core-shrinkwrap.min.js" type="text/javascript"></script>
-
-  <!-- Cloudinary Player JS -->
-  <script src="https://unpkg.com/cloudinary-video-player/dist/cld-video-player.min.js" type="text/javascript"></script>
-<title>Page Title</title>
-</head>
-<body>
-  <video autoplay="" class="cld-video-player cld-video-player-skin-dark" id="player" muted="" poster="https://www.w3schools.com/images/img_program_up_frontend_160.webp" width="420px"></video>
-
-</body>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<video id="video" controls width="100%" height="400"></video>
 <script>
-const cld = cloudinary.Cloudinary.new({
-  cloud_name: "demo"
-});
-
-const publicId = "dog";
-
-// Set overrideNative and other options
-const player = cld.videoPlayer("player", {
-  html5: {
-    hls: {
-      overrideNative: true
+    const video = document.getElementById('video');
+    if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource('STREAM_URL.m3u8');
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+            video.play();
+        });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = 'http://front-main.eagle-4k.me:80/live/9fshhuw2z7/54hw7lwwb1/2541.m3u8';
+        video.addEventListener('loadedmetadata', function() {
+            video.play();
+        });
     }
-  },
-  showLogo: false,
-  controls: true
-});
-
-// Set publicId to play
-player.source("http://front-main.eagle-4k.me:80/live/9fshhuw2z7/54hw7lwwb1/2540.m3u8", {
-  sourceTypes: ["hls"],
-  transformation: { streaming_profile: "hd" },
-  info: { title: "عمرو سيد" }
-});
-
-// Access underlying videojs object
-console.log(player.videojs.options_.html5);
-player.videojs.options_.html5.hls.overrideNative = true;
-console.log(player.videojs.options_.html5.hls.overrideNative);
 </script>
-</html>
