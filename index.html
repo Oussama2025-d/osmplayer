@@ -196,7 +196,7 @@
             max-width: 80%;
         }
 
-        /* Controls - التعديل لجعلها ظاهرة دائمًا */
+        /* Controls */
         .controls {
             position: absolute;
             bottom: 0;
@@ -205,7 +205,6 @@
             background: var(--control-bg);
             padding: 1rem;
             backdrop-filter: blur(10px);
-            /* تم إزالة transform لإظهار العناصر دائمًا */
             display: flex;
             flex-direction: column;
             gap: 12px;
@@ -530,7 +529,7 @@
                 <!-- رسالة الخطأ -->
                 <div class="error-message" id="error-message"></div>
                 
-                <!-- عناصر التحكم - ظاهرة دائمًا -->
+                <!-- عناصر التحكم -->
                 <div class="controls">
                     <!-- شريط التقدم -->
                     <div class="progress-container" id="progress-container">
@@ -649,18 +648,18 @@
             // قائمة السيرفرات
             const servers = [
                 {
-                    name: "سيرفر رئيسي",
-                    url: "https://cdn.live.easybroadcast.io/abr_corp/73_arryadia_k2tgcj0/corp/73_arryadia_k2tgcj0_480p/chunks_dvr.m3u8",
-                    type: "hls"
-                },
-                {
-                    name: "سيرفر احتياطي",
-                    url: "https://cdn.live.easybroadcast.io/abr_corp/73_arryadia_k2tgcj0/corp/73_arryadia_k2tgcj0_480p/chunks_dvr.m3u8",
+                    name: "سيرفر HLS (M3U8)",
+                    url: "http://dreamtv22.info:25461/live/334455/334455/36776.ts",
                     type: "hls"
                 },
                 {
                     name: "سيرفر TS",
-                    url: "http://asmr4k.world:8080//live/25243658704/82626274859/497111.ts",
+                    url: "http://dreamtv22.info:25461/live/334455/334455/36776.ts",
+                    type: "ts"
+                },
+                {
+                    name: "سيرفر احتياطي",
+                    url: "http://dreamtv22.info:25461/live/334455/334455/36776.ts",
                     type: "hls"
                 }
             ];
@@ -707,6 +706,7 @@
             function selectServer(index) {
                 currentServer = servers[index];
                 updateServerInfo('connecting', `جاري الاتصال بـ ${currentServer.name}`);
+                retryCount = 0;
                 
                 // إيقاف أي تشغيل حالى
                 if (hls) {
@@ -720,6 +720,41 @@
                 // إضافة معرّف ذاكرة التخزين المؤقت
                 const streamUrl = currentServer.url + (currentServer.url.includes('?') ? '&' : '?') + 't=' + Date.now();
                 
+                // إذا كان الرابط .ts، شغله مباشرة
+                if (currentServer.type === 'ts') {
+                    playTSStream(streamUrl);
+                } 
+                // إذا كان الرابط M3U8، استخدم HLS.js
+                else if (currentServer.type === 'hls') {
+                    playHLSStream(streamUrl);
+                }
+            }
+            
+            // تشغيل رابط TS مباشرة
+            function playTSStream(url) {
+                video.src = url;
+                video.load();
+                
+                video.onloadeddata = function() {
+                    video.play().then(() => {
+                        updateServerInfo('connected', `متصل: ${currentServer.name}`);
+                        loadingScreen.style.display = 'none';
+                        isPlaying = true;
+                        playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                    }).catch(err => {
+                        showError('لا يمكن تشغيل الرابط');
+                        updateServerInfo('error', 'فشل التشغيل');
+                    });
+                };
+                
+                video.onerror = function() {
+                    showError('الرابط غير مدعوم أو تالف');
+                    updateServerInfo('error', 'رابط TS غير مدعوم');
+                };
+            }
+            
+            // تشغيل رابط HLS باستخدام hls.js
+            function playHLSStream(url) {
                 if (Hls.isSupported()) {
                     hls = new Hls({
                         maxBufferLength: 30,
@@ -729,7 +764,7 @@
                         maxBufferHole: 0.5
                     });
                     
-                    hls.loadSource(streamUrl);
+                    hls.loadSource(url);
                     hls.attachMedia(video);
                     
                     hls.on(Hls.Events.MANIFEST_PARSED, function(event, data) {
@@ -742,13 +777,14 @@
                     });
                 } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
                     // دعم Safari
-                    video.src = streamUrl;
+                    video.src = url;
                     video.addEventListener('loadedmetadata', startPlayback);
                     video.addEventListener('error', function() {
                         handleError({ type: 'mediaError' });
                     });
                 } else {
                     showError('المتصفح لا يدعم تشغيل هذا النوع من البث');
+                    updateServerInfo('error', 'غير مدعوم');
                 }
             }
             
@@ -763,7 +799,7 @@
                     <span>تلقائي</span>
                 `;
                 autoItem.addEventListener('click', () => {
-                    hls.currentLevel = -1;
+                    if (hls) hls.currentLevel = -1;
                 });
                 qualityMenu.appendChild(autoItem);
                 
@@ -781,7 +817,7 @@
                         `;
                         
                         item.addEventListener('click', () => {
-                            hls.currentLevel = index;
+                            if (hls) hls.currentLevel = index;
                         });
                         
                         qualityMenu.appendChild(item);
@@ -921,9 +957,8 @@
             });
             
             homeBtn.addEventListener('click', function() {
-                // هنا يمكنك إضافة الرابط إلى صفحة جدول المباريات
-                // window.location.href = 'https://oussama2025-d.github.io/player/';
                 showError('سيتم توجيهك إلى جدول المباريات');
+                // window.location.href = 'رابط_الصفحة_الرئيسية';
             });
             
             // تنسيق الوقت
