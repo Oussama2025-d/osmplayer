@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OSM LIVE TV</title>
+    <title>OSM LIVE TV PRO</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary: #00c6ff;
-            --secondary: #0072ff;
+            --primary: #3a86ff;
+            --secondary: #8338ec;
             --dark: #0f172a;
             --light: #f8fafc;
-            --accent: #ff3e6d;
-            --control-bg: rgba(15, 23, 42, 0.85);
-            --success: #10b981;
-            --warning: #f59e0b;
-            --error: #ef4444;
+            --accent: #ff006e;
+            --control-bg: rgba(15, 23, 42, 0.95);
+            --success: #06d6a0;
+            --warning: #ffbe0b;
+            --error: #ef476f;
+            --server-active: rgba(58, 134, 255, 0.2);
         }
 
         * {
@@ -31,6 +32,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow-x: hidden;
         }
 
         /* Header */
@@ -39,36 +41,16 @@
             padding: 1rem;
             text-align: center;
             position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(
-                to bottom right,
-                rgba(255, 255, 255, 0.1) 0%,
-                rgba(255, 255, 255, 0) 60%
-            );
-            transform: rotate(30deg);
-            animation: shimmer 8s infinite linear;
-        }
-
-        @keyframes shimmer {
-            0% { transform: rotate(30deg) translate(-10%, -10%); }
-            100% { transform: rotate(30deg) translate(10%, 10%); }
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            z-index: 100;
         }
 
         .header-content {
-            position: relative;
-            z-index: 1;
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .logo-container {
@@ -85,7 +67,12 @@
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid white;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s;
+        }
+
+        .logo:hover {
+            transform: rotate(15deg);
         }
 
         .site-title {
@@ -93,17 +80,18 @@
             font-weight: 700;
             color: white;
             position: relative;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
         }
 
         .site-title::after {
-            content: 'LIVE';
+            content: 'PRO';
             position: absolute;
             top: -10px;
             left: -25px;
             background: var(--accent);
             color: white;
             font-size: 0.7rem;
-            padding: 2px 8px;
+            padding: 2px 10px;
             border-radius: 20px;
             animation: pulse 1.5s infinite;
         }
@@ -116,32 +104,151 @@
         .copyright {
             font-size: 0.8rem;
             color: rgba(255, 255, 255, 0.8);
+            margin-top: 5px;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: flex;
+            flex: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Server Panel */
+        .server-panel {
+            width: 280px;
+            background: rgba(15, 23, 42, 0.8);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            overflow-y: auto;
+            transition: transform 0.3s;
+            z-index: 50;
+        }
+
+        .server-panel-toggle {
+            display: none;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 150;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .server-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .server-group-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.8rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .server-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .server-item {
+            padding: 0.8rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        .server-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .server-item.active {
+            background: var(--server-active);
+            border-left: 3px solid var(--primary);
+        }
+
+        .server-item-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+        }
+
+        .server-item-info {
+            flex: 1;
+        }
+
+        .server-item-name {
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin-bottom: 3px;
+        }
+
+        .server-item-type {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.6);
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .server-item-status {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .server-item.active .server-item-status {
+            background: var(--success);
+            box-shadow: 0 0 5px var(--success);
         }
 
         /* Main Content */
         .main-content {
             flex: 1;
             display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 2rem;
+            flex-direction: column;
             position: relative;
         }
 
         /* Player */
         .player-container {
             width: 100%;
-            max-width: 1000px;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
             position: relative;
+            margin: 1rem;
             transition: all 0.3s ease;
-        }
-
-        .player-container:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
         }
 
         .player-wrapper {
@@ -208,6 +315,12 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+            transform: translateY(0);
+            transition: transform 0.3s;
+        }
+
+        .player-container:hover .controls {
+            transform: translateY(0);
         }
 
         .progress-container {
@@ -323,84 +436,25 @@
             transform: scale(1.2);
         }
 
-        /* Server Info */
-        .server-info {
-            padding: 0.5rem 0.8rem;
-            border-radius: 20px;
+        /* Quality and Server Info */
+        .stream-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .stream-meta {
+            display: flex;
+            align-items: center;
+            gap: 5px;
             font-size: 0.8rem;
             background: rgba(0, 0, 0, 0.3);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .server-info.connected {
-            background: rgba(16, 185, 129, 0.2);
-            color: var(--success);
-        }
-
-        .server-info.connecting {
-            background: rgba(245, 158, 11, 0.2);
-            color: var(--warning);
-        }
-
-        .server-info.error {
-            background: rgba(239, 68, 68, 0.2);
-            color: var(--error);
-        }
-
-        /* Dropdown */
-        .dropdown {
-            position: relative;
-        }
-
-        .dropdown-toggle {
-            background: rgba(0, 0, 0, 0.3);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
+            padding: 0.3rem 0.8rem;
             border-radius: 20px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
         }
 
-        .dropdown-toggle:hover {
-            background: rgba(0, 0, 0, 0.4);
-        }
-
-        .dropdown-menu {
-            position: absolute;
-            bottom: 100%;
-            right: 0;
-            background: var(--control-bg);
-            border-radius: 8px;
-            padding: 0.5rem 0;
-            min-width: 180px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            display: none;
-            z-index: 100;
-            backdrop-filter: blur(10px);
-        }
-
-        .dropdown.active .dropdown-menu {
-            display: block;
-        }
-
-        .dropdown-item {
-            padding: 0.7rem 1rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .dropdown-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--accent);
+        .stream-meta i {
+            color: var(--primary);
         }
 
         /* Error Message */
@@ -452,6 +506,26 @@
         }
 
         /* Responsive */
+        @media (max-width: 1200px) {
+            .server-panel {
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                transform: translateX(-100%);
+                width: 300px;
+                padding-top: 80px;
+            }
+
+            .server-panel.active {
+                transform: translateX(0);
+            }
+
+            .server-panel-toggle {
+                display: flex;
+            }
+        }
+
         @media (max-width: 768px) {
             .header {
                 padding: 0.8rem;
@@ -464,10 +538,6 @@
             
             .site-title {
                 font-size: 1.4rem;
-            }
-            
-            .main-content {
-                padding: 1rem;
             }
             
             .controls {
@@ -484,9 +554,9 @@
                 font-size: 0.8rem;
             }
             
-            .server-info {
+            .stream-meta {
                 font-size: 0.7rem;
-                padding: 0.4rem 0.6rem;
+                padding: 0.3rem 0.6rem;
             }
             
             .home-btn {
@@ -504,105 +574,134 @@
         <i class="fas fa-home"></i>
     </div>
 
+    <!-- زر عرض/إخفاء لوحة السيرفرات -->
+    <div class="server-panel-toggle" id="server-panel-toggle">
+        <i class="fas fa-server"></i>
+    </div>
+
     <header class="header">
         <div class="header-content">
             <div class="logo-container">
                 <img src="https://k.top4top.io/p_3478hxiyr1.png" alt="شعار OSM LIVE" class="logo">
-                <h1 class="site-title">OSM LIVE</h1>
+                <h1 class="site-title">OSM LIVE TV</h1>
             </div>
             <p class="copyright">جميع الحقوق محفوظة &copy; <span id="year"></span></p>
         </div>
     </header>
 
-    <main class="main-content">
-        <div class="player-container">
-            <div class="player-wrapper">
-                <!-- شاشة التحميل -->
-                <div class="loading-screen" id="loading-screen">
-                    <div class="loading-spinner"></div>
-                    <p class="loading-text">جاري تحميل البث المباشر...</p>
-                </div>
-                
-                <!-- مشغل الفيديو -->
-                <video id="video-player" playsinline></video>
-                
-                <!-- رسالة الخطأ -->
-                <div class="error-message" id="error-message"></div>
-                
-                <!-- عناصر التحكم -->
-                <div class="controls">
-                    <!-- شريط التقدم -->
-                    <div class="progress-container" id="progress-container">
-                        <div id="progress-bar"></div>
+    <div class="main-layout">
+        <!-- لوحة السيرفرات -->
+        <div class="server-panel" id="server-panel">
+            <div class="server-group">
+                <h3 class="server-group-title">
+                    <i class="fas fa-satellite-dish"></i>
+                    القنوات الرياضية
+                </h3>
+                <div class="server-list" id="sports-servers"></div>
+            </div>
+
+            <div class="server-group">
+                <h3 class="server-group-title">
+                    <i class="fas fa-film"></i>
+                    القنوات السينمائية
+                </h3>
+                <div class="server-list" id="movies-servers"></div>
+            </div>
+
+            <div class="server-group">
+                <h3 class="server-group-title">
+                    <i class="fas fa-globe"></i>
+                    القنوات الدولية
+                </h3>
+                <div class="server-list" id="international-servers"></div>
+            </div>
+        </div>
+
+        <!-- المحتوى الرئيسي -->
+        <main class="main-content">
+            <div class="player-container">
+                <div class="player-wrapper">
+                    <!-- شاشة التحميل -->
+                    <div class="loading-screen" id="loading-screen">
+                        <div class="loading-spinner"></div>
+                        <p class="loading-text">جاري تحميل البث المباشر...</p>
                     </div>
                     
-                    <!-- صف التحكم الأول -->
-                    <div class="controls-row">
-                        <!-- زر التشغيل/الإيقاف -->
-                        <button class="control-btn" id="play-btn">
-                            <i class="fas fa-play"></i>
-                        </button>
+                    <!-- مشغل الفيديو -->
+                    <video id="video-player" playsinline></video>
+                    
+                    <!-- رسالة الخطأ -->
+                    <div class="error-message" id="error-message"></div>
+                    
+                    <!-- عناصر التحكم -->
+                    <div class="controls">
+                        <!-- شريط التقدم -->
+                        <div class="progress-container" id="progress-container">
+                            <div id="progress-bar"></div>
+                        </div>
                         
-                        <!-- زر الرجوع 10 ثواني -->
-                        <button class="control-btn" id="backward-btn">
-                            <i class="fas fa-backward"></i>
-                        </button>
-                        
-                        <!-- زر التقدم 10 ثواني -->
-                        <button class="control-btn" id="forward-btn">
-                            <i class="fas fa-forward"></i>
-                        </button>
-                        
-                        <!-- التحكم في الصوت -->
-                        <div class="volume-container">
-                            <button class="control-btn" id="mute-btn">
-                                <i class="fas fa-volume-up"></i>
+                        <!-- صف التحكم الأول -->
+                        <div class="controls-row">
+                            <!-- زر التشغيل/الإيقاف -->
+                            <button class="control-btn" id="play-btn">
+                                <i class="fas fa-play"></i>
                             </button>
-                            <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1">
-                        </div>
-                        
-                        <!-- عرض الوقت -->
-                        <div class="time-display">
-                            <span id="current-time">00:00:00</span> / 
-                            <span id="duration">00:00:00</span>
-                        </div>
-                        
-                        <!-- مسافة فارغة -->
-                        <div class="spacer"></div>
-                        
-                        <!-- اختيار الجودة -->
-                        <div class="dropdown" id="quality-dropdown">
-                            <button class="dropdown-toggle" id="quality-btn">
-                                <i class="fas fa-tv"></i>
-                                <span>الجودة</span>
+                            
+                            <!-- زر الرجوع 10 ثواني -->
+                            <button class="control-btn" id="backward-btn">
+                                <i class="fas fa-backward"></i>
                             </button>
-                            <div class="dropdown-menu" id="quality-menu"></div>
-                        </div>
-                        
-                        <!-- اختيار السيرفر -->
-                        <div class="dropdown" id="server-dropdown">
-                            <button class="dropdown-toggle" id="server-btn">
-                                <i class="fas fa-server"></i>
-                                <span>السيرفر</span>
+                            
+                            <!-- زر التقدم 10 ثواني -->
+                            <button class="control-btn" id="forward-btn">
+                                <i class="fas fa-forward"></i>
                             </button>
-                            <div class="dropdown-menu" id="server-menu"></div>
+                            
+                            <!-- التحكم في الصوت -->
+                            <div class="volume-container">
+                                <button class="control-btn" id="mute-btn">
+                                    <i class="fas fa-volume-up"></i>
+                                </button>
+                                <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1">
+                            </div>
+                            
+                            <!-- عرض الوقت -->
+                            <div class="time-display">
+                                <span id="current-time">00:00:00</span> / 
+                                <span id="duration">00:00:00</span>
+                            </div>
+                            
+                            <!-- مسافة فارغة -->
+                            <div class="spacer"></div>
+                            
+                            <!-- معلومات البث -->
+                            <div class="stream-info">
+                                <div class="stream-meta" id="stream-quality">
+                                    <i class="fas fa-tv"></i>
+                                    <span>جودة: تلقائي</span>
+                                </div>
+                                <div class="stream-meta" id="stream-server">
+                                    <i class="fas fa-server"></i>
+                                    <span>جاري الاتصال...</span>
+                                </div>
+                            </div>
+                            
+                            <!-- زر ملء الشاشة -->
+                            <button class="control-btn" id="fullscreen-btn">
+                                <i class="fas fa-expand"></i>
+                            </button>
                         </div>
-                        
-                        <!-- حالة السيرفر -->
-                        <div class="server-info" id="server-info">
-                            <i class="fas fa-circle-notch fa-spin"></i>
-                            <span>جاري الاتصال...</span>
-                        </div>
-                        
-                        <!-- زر ملء الشاشة -->
-                        <button class="control-btn" id="fullscreen-btn">
-                            <i class="fas fa-expand"></i>
-                        </button>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
+
+            <!-- معلومات إضافية -->
+            <div class="player-info">
+                <h3 id="current-channel-name">لم يتم اختيار قناة</h3>
+                <p id="current-channel-description">الرجاء اختيار قناة من لوحة السيرفرات</p>
+            </div>
+        </main>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script>
@@ -624,17 +723,18 @@
             const forwardBtn = document.getElementById('forward-btn');
             const loadingScreen = document.getElementById('loading-screen');
             const errorMessage = document.getElementById('error-message');
-            const serverInfo = document.getElementById('server-info');
             const homeBtn = document.getElementById('home-btn');
+            const serverPanel = document.getElementById('server-panel');
+            const serverPanelToggle = document.getElementById('server-panel-toggle');
+            const streamQuality = document.getElementById('stream-quality');
+            const streamServer = document.getElementById('stream-server');
+            const channelName = document.getElementById('current-channel-name');
+            const channelDesc = document.getElementById('current-channel-description');
             
-            // عناصر القوائم المنسدلة
-            const qualityDropdown = document.getElementById('quality-dropdown');
-            const qualityBtn = document.getElementById('quality-btn');
-            const qualityMenu = document.getElementById('quality-menu');
-            
-            const serverDropdown = document.getElementById('server-dropdown');
-            const serverBtn = document.getElementById('server-btn');
-            const serverMenu = document.getElementById('server-menu');
+            // عناصر قوائم السيرفرات
+            const sportsServers = document.getElementById('sports-servers');
+            const moviesServers = document.getElementById('movies-servers');
+            const internationalServers = document.getElementById('international-servers');
             
             // متغيرات المشغل
             let hls = null;
@@ -645,68 +745,115 @@
             let retryCount = 0;
             const maxRetries = 3;
             
-            // قائمة السيرفرات
-            const servers = [
-                {
-                    name: "سيرفر HLS (M3U8)",
-                    url: "http://dreamtv22.info:25461/live/334455/334455/36776.ts",
-                    type: "hls"
-                },
-                {
-                    name: "سيرفر TS",
-                    url: "http://dreamtv22.info:25461/live/334455/334455/36776.ts",
-                    type: "ts"
-                },
-                {
-                    name: "سيرفر احتياطي",
-                    url: "http://dreamtv22.info:25461/live/334455/334455/36776.ts",
-                    type: "hls"
-                }
-            ];
+            // قائمة السيرفرات المنظمة
+            const serverGroups = {
+                sports: [
+                    {
+                        id: 'bein-sports-1',
+                        name: "بي إن سبورت 1",
+                        description: "القناة الرياضية الأولى الشهيرة",
+                        url: "https://example.com/bein1.m3u8",
+                        type: "hls",
+                        logo: "https://example.com/bein1.png",
+                        quality: ['720p', '480p', '360p']
+                    },
+                    {
+                        id: 'bein-sports-2',
+                        name: "بي إن سبورت 2",
+                        description: "القناة الرياضية الثانية",
+                        url: "https://example.com/bein2.m3u8",
+                        type: "hls",
+                        logo: "https://example.com/bein2.png",
+                        quality: ['720p', '480p']
+                    }
+                ],
+                movies: [
+                    {
+                        id: 'osn-movies',
+                        name: "OSN Movies",
+                        description: "أحدث الأفلام العالمية",
+                        url: "https://example.com/osn-movies.m3u8",
+                        type: "hls",
+                        logo: "https://example.com/osn.png",
+                        quality: ['1080p', '720p']
+                    }
+                ],
+                international: [
+                    {
+                        id: 'bbc-world',
+                        name: "BBC World",
+                        description: "قناة BBC العالمية للأخبار",
+                        url: "https://example.com/bbc.ts",
+                        type: "ts",
+                        logo: "https://example.com/bbc.png"
+                    }
+                ]
+            };
             
-            // تهيئة القوائم المنسدلة
-            function initDropdowns() {
-                // قائمة الجودة
-                qualityBtn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    qualityDropdown.classList.toggle('active');
-                    serverDropdown.classList.remove('active');
+            // تهيئة لوحة السيرفرات
+            function initServerPanel() {
+                // تعبئة القنوات الرياضية
+                serverGroups.sports.forEach(server => {
+                    addServerItem(server, sportsServers);
                 });
                 
-                // قائمة السيرفرات
-                serverBtn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    serverDropdown.classList.toggle('active');
-                    qualityDropdown.classList.remove('active');
+                // تعبئة القنوات السينمائية
+                serverGroups.movies.forEach(server => {
+                    addServerItem(server, moviesServers);
                 });
                 
-                // إغلاق القوائم عند النقر خارجها
-                document.addEventListener('click', function() {
-                    qualityDropdown.classList.remove('active');
-                    serverDropdown.classList.remove('active');
+                // تعبئة القنوات الدولية
+                serverGroups.international.forEach(server => {
+                    addServerItem(server, internationalServers);
                 });
                 
-                // تعبئة قائمة السيرفرات
-                serverMenu.innerHTML = '';
-                servers.forEach((server, index) => {
-                    const item = document.createElement('div');
-                    item.className = 'dropdown-item';
-                    item.innerHTML = `
-                        <i class="fas fa-server"></i>
-                        <span>${server.name}</span>
-                    `;
-                    item.addEventListener('click', () => {
-                        selectServer(index);
-                    });
-                    serverMenu.appendChild(item);
+                // اختيار أول سيرفر تلقائياً
+                if (serverGroups.sports.length > 0) {
+                    selectServer(serverGroups.sports[0]);
+                }
+            }
+            
+            // إضافة عنصر سيرفر إلى القائمة
+            function addServerItem(server, container) {
+                const item = document.createElement('div');
+                item.className = 'server-item';
+                item.id = `server-${server.id}`;
+                item.innerHTML = `
+                    <div class="server-item-status"></div>
+                    <div class="server-item-icon">
+                        <i class="fas fa-play"></i>
+                    </div>
+                    <div class="server-item-info">
+                        <div class="server-item-name">${server.name}</div>
+                        <div class="server-item-type">${server.type === 'hls' ? 'HLS' : 'TS'}</div>
+                    </div>
+                `;
+                
+                item.addEventListener('click', () => {
+                    selectServer(server);
                 });
+                
+                container.appendChild(item);
             }
             
             // اختيار سيرفر
-            function selectServer(index) {
-                currentServer = servers[index];
-                updateServerInfo('connecting', `جاري الاتصال بـ ${currentServer.name}`);
+            function selectServer(server) {
+                // إزالة التنشيط من جميع السيرفرات
+                document.querySelectorAll('.server-item').forEach(el => {
+                    el.classList.remove('active');
+                });
+                
+                // تنشيط السيرفر المحدد
+                const serverEl = document.getElementById(`server-${server.id}`);
+                if (serverEl) serverEl.classList.add('active');
+                
+                currentServer = server;
                 retryCount = 0;
+                
+                // تحديث معلومات القناة
+                channelName.textContent = server.name;
+                channelDesc.textContent = server.description;
+                streamServer.innerHTML = `<i class="fas fa-server"></i><span>${server.name}</span>`;
                 
                 // إيقاف أي تشغيل حالى
                 if (hls) {
@@ -718,14 +865,14 @@
                 errorMessage.style.display = 'none';
                 
                 // إضافة معرّف ذاكرة التخزين المؤقت
-                const streamUrl = currentServer.url + (currentServer.url.includes('?') ? '&' : '?') + 't=' + Date.now();
+                const streamUrl = server.url + (server.url.includes('?') ? '&' : '?') + 't=' + Date.now();
                 
                 // إذا كان الرابط .ts، شغله مباشرة
-                if (currentServer.type === 'ts') {
+                if (server.type === 'ts') {
                     playTSStream(streamUrl);
                 } 
                 // إذا كان الرابط M3U8، استخدم HLS.js
-                else if (currentServer.type === 'hls') {
+                else if (server.type === 'hls') {
                     playHLSStream(streamUrl);
                 }
             }
@@ -737,19 +884,19 @@
                 
                 video.onloadeddata = function() {
                     video.play().then(() => {
-                        updateServerInfo('connected', `متصل: ${currentServer.name}`);
                         loadingScreen.style.display = 'none';
                         isPlaying = true;
                         playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                        updateStreamInfo('connected', `متصل: ${currentServer.name}`);
                     }).catch(err => {
                         showError('لا يمكن تشغيل الرابط');
-                        updateServerInfo('error', 'فشل التشغيل');
+                        updateStreamInfo('error', 'فشل التشغيل');
                     });
                 };
                 
                 video.onerror = function() {
                     showError('الرابط غير مدعوم أو تالف');
-                    updateServerInfo('error', 'رابط TS غير مدعوم');
+                    updateStreamInfo('error', 'رابط TS غير مدعوم');
                 };
             }
             
@@ -784,26 +931,46 @@
                     });
                 } else {
                     showError('المتصفح لا يدعم تشغيل هذا النوع من البث');
-                    updateServerInfo('error', 'غير مدعوم');
+                    updateStreamInfo('error', 'غير مدعوم');
                 }
             }
             
             // تحديث خيارات الجودة
             function updateQualityOptions(levels) {
-                qualityMenu.innerHTML = '';
+                if (!levels || levels.length <= 1) {
+                    streamQuality.innerHTML = '<i class="fas fa-tv"></i><span>جودة: تلقائي</span>';
+                    return;
+                }
                 
-                const autoItem = document.createElement('div');
-                autoItem.className = 'dropdown-item';
-                autoItem.innerHTML = `
-                    <i class="fas fa-magic"></i>
-                    <span>تلقائي</span>
-                `;
-                autoItem.addEventListener('click', () => {
-                    if (hls) hls.currentLevel = -1;
-                });
-                qualityMenu.appendChild(autoItem);
+                // عرض الجودة الحالية
+                const currentLevel = hls.currentLevel;
+                const level = levels[currentLevel] || levels[0];
+                const height = level.height || '?';
                 
-                if (levels && levels.length > 1) {
+                streamQuality.innerHTML = `<i class="fas fa-tv"></i><span>جودة: ${height}p</span>`;
+                
+                // عند النقر على الجودة، عرض الخيارات
+                streamQuality.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    
+                    const menu = document.createElement('div');
+                    menu.className = 'dropdown-menu';
+                    menu.style.position = 'absolute';
+                    menu.style.bottom = '100%';
+                    menu.style.right = '0';
+                    
+                    // خيار التلقائي
+                    const autoItem = document.createElement('div');
+                    autoItem.className = 'dropdown-item';
+                    autoItem.innerHTML = '<i class="fas fa-magic"></i><span>تلقائي</span>';
+                    autoItem.addEventListener('click', () => {
+                        hls.currentLevel = -1;
+                        streamQuality.innerHTML = '<i class="fas fa-tv"></i><span>جودة: تلقائي</span>';
+                        menu.remove();
+                    });
+                    menu.appendChild(autoItem);
+                    
+                    // خيارات الجودة
                     levels.forEach((level, index) => {
                         const item = document.createElement('div');
                         item.className = 'dropdown-item';
@@ -811,18 +978,28 @@
                         const height = level.height || '?';
                         const bitrate = Math.round(level.bitrate / 1000);
                         
-                        item.innerHTML = `
-                            <i class="fas fa-stream"></i>
-                            <span>${height}p (${bitrate}kbps)</span>
-                        `;
+                        item.innerHTML = `<i class="fas fa-stream"></i><span>${height}p (${bitrate}kbps)</span>`;
                         
                         item.addEventListener('click', () => {
-                            if (hls) hls.currentLevel = index;
+                            hls.currentLevel = index;
+                            streamQuality.innerHTML = `<i class="fas fa-tv"></i><span>جودة: ${height}p</span>`;
+                            menu.remove();
                         });
                         
-                        qualityMenu.appendChild(item);
+                        menu.appendChild(item);
                     });
-                }
+                    
+                    // إضافة القائمة إلى DOM
+                    streamQuality.appendChild(menu);
+                    
+                    // إغلاق القائمة عند النقر خارجها
+                    setTimeout(() => {
+                        document.addEventListener('click', function closeMenu() {
+                            menu.remove();
+                            document.removeEventListener('click', closeMenu);
+                        });
+                    }, 10);
+                });
             }
             
             // بدء التشغيل
@@ -831,10 +1008,10 @@
                     isPlaying = true;
                     playBtn.innerHTML = '<i class="fas fa-pause"></i>';
                     loadingScreen.style.display = 'none';
-                    updateServerInfo('connected', `متصل: ${currentServer.name}`);
+                    updateStreamInfo('connected', `متصل: ${currentServer.name}`);
                 }).catch(err => {
                     showError('الرجاء النقر على زر التشغيل');
-                    updateServerInfo('error', 'فشل التشغيل');
+                    updateStreamInfo('error', 'فشل التشغيل');
                 });
             }
             
@@ -850,7 +1027,7 @@
                     }, 2000 * retryCount);
                 } else {
                     showError('فشل الاتصال، الرجاء اختيار سيرفر آخر');
-                    updateServerInfo('error', 'فشل الاتصال');
+                    updateStreamInfo('error', 'فشل الاتصال');
                     loadingScreen.style.display = 'none';
                 }
             }
@@ -866,20 +1043,27 @@
             }
             
             // تحديث حالة السيرفر
-            function updateServerInfo(status, message) {
-                serverInfo.className = 'server-info';
-                serverInfo.classList.add(status);
+            function updateStreamInfo(status, message) {
+                const serverEl = document.getElementById(`server-${currentServer.id}`);
+                if (!serverEl) return;
                 
-                let icon = '';
+                const statusEl = serverEl.querySelector('.server-item-status');
+                if (!statusEl) return;
+                
+                // تحديث حالة السيرفر في اللوحة
+                statusEl.style.background = 'rgba(255, 255, 255, 0.2)';
+                statusEl.style.boxShadow = 'none';
+                
                 if (status === 'connected') {
-                    icon = '<i class="fas fa-check-circle"></i>';
-                } else if (status === 'connecting') {
-                    icon = '<i class="fas fa-circle-notch fa-spin"></i>';
-                } else {
-                    icon = '<i class="fas fa-exclamation-circle"></i>';
+                    statusEl.style.background = 'var(--success)';
+                    statusEl.style.boxShadow = '0 0 5px var(--success)';
+                } else if (status === 'error') {
+                    statusEl.style.background = 'var(--error)';
+                    statusEl.style.boxShadow = '0 0 5px var(--error)';
                 }
                 
-                serverInfo.innerHTML = `${icon} <span>${message}</span>`;
+                // تحديث المعلومات في شريط التحكم
+                streamServer.innerHTML = `<i class="fas fa-server"></i><span>${message}</span>`;
             }
             
             // أحداث المشغل
@@ -961,6 +1145,10 @@
                 // window.location.href = 'رابط_الصفحة_الرئيسية';
             });
             
+            serverPanelToggle.addEventListener('click', function() {
+                serverPanel.classList.toggle('active');
+            });
+            
             // تنسيق الوقت
             function formatTime(seconds) {
                 const h = Math.floor(seconds / 3600);
@@ -970,12 +1158,7 @@
             }
             
             // بدء التهيئة
-            initDropdowns();
-            
-            // اختيار أول سيرفر تلقائياً
-            if (servers.length > 0) {
-                selectServer(0);
-            }
+            initServerPanel();
         });
     </script>
 </body>
