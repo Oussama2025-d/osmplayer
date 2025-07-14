@@ -176,6 +176,11 @@
             transform: translateY(0);
         }
 
+        /* Hide progress bar in fullscreen */
+        .player-container:fullscreen .progress-container {
+            display: none;
+        }
+
         .progress-container {
             width: 100%;
             height: 5px;
@@ -381,6 +386,37 @@
             to { opacity: 1; transform: translate(-50%, -50%); }
         }
 
+        /* Welcome Message */
+        .welcome-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            max-width: 80%;
+            z-index: 15;
+            border: 1px solid var(--accent);
+        }
+
+        .welcome-message button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            margin-top: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .welcome-message button:hover {
+            background: var(--primary-dark);
+        }
+
         /* Footer */
         .footer {
             text-align: center;
@@ -455,6 +491,13 @@
                     <div class="loading-screen" id="loading-screen">
                         <div class="loading-spinner"></div>
                         <div class="loading-text">جاري تحميل البث المباشر...</div>
+                    </div>
+                    
+                    <!-- Welcome Message -->
+                    <div class="welcome-message" id="welcome-message">
+                        <h3>مرحباً بك في مشغل OSM</h3>
+                        <p>الرجاء اختيار سيرفر من القائمة أدناه ثم النقر على زر التشغيل</p>
+                        <button id="start-playback-btn">بدء التشغيل</button>
                     </div>
                     
                     <!-- Video Element -->
@@ -544,6 +587,8 @@
             const fullscreenBtn = document.getElementById('fullscreen-btn');
             const loadingScreen = document.getElementById('loading-screen');
             const errorMessage = document.getElementById('error-message');
+            const welcomeMessage = document.getElementById('welcome-message');
+            const startPlaybackBtn = document.getElementById('start-playback-btn');
             const serverGrid = document.getElementById('server-grid');
             
             // متغيرات المشغل
@@ -611,15 +656,11 @@
                     
                     serverCard.addEventListener('click', () => {
                         selectServer(server);
+                        welcomeMessage.style.display = 'block';
                     });
                     
                     serverGrid.appendChild(serverCard);
                 });
-                
-                // اختيار أول سيرفر تلقائياً
-                if (servers.length > 0) {
-                    selectServer(servers[0]);
-                }
             }
             
             // اختيار سيرفر
@@ -664,15 +705,10 @@
                 video.load();
                 
                 video.onloadeddata = function() {
-                    video.play().then(() => {
-                        loadingScreen.style.display = 'none';
-                        isPlaying = true;
-                        playBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                        updateServerStatus('connected');
-                    }).catch(err => {
-                        showError('لا يمكن تشغيل الرابط');
-                        updateServerStatus('error');
-                    });
+                    loadingScreen.style.display = 'none';
+                    updateServerStatus('connected');
+                    playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                    isPlaying = false;
                 };
                 
                 video.onerror = function() {
@@ -698,7 +734,10 @@
                     hls.attachMedia(video);
                     
                     hls.on(Hls.Events.MANIFEST_PARSED, function(event, data) {
-                        startPlayback();
+                        loadingScreen.style.display = 'none';
+                        updateServerStatus('connected');
+                        playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                        isPlaying = false;
                     });
                     
                     hls.on(Hls.Events.ERROR, function(event, data) {
@@ -707,7 +746,12 @@
                 } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
                     // دعم Safari
                     video.src = url;
-                    video.addEventListener('loadedmetadata', startPlayback);
+                    video.addEventListener('loadedmetadata', function() {
+                        loadingScreen.style.display = 'none';
+                        updateServerStatus('connected');
+                        playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                        isPlaying = false;
+                    });
                     video.addEventListener('error', function() {
                         handleError({ type: 'mediaError' });
                     });
@@ -715,19 +759,6 @@
                     showError('المتصفح لا يدعم تشغيل هذا النوع من البث');
                     updateServerStatus('error');
                 }
-            }
-            
-            // بدء التشغيل
-            function startPlayback() {
-                video.play().then(() => {
-                    isPlaying = true;
-                    playBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                    loadingScreen.style.display = 'none';
-                    updateServerStatus('connected');
-                }).catch(err => {
-                    showError('الرجاء النقر على زر التشغيل');
-                    updateServerStatus('error');
-                });
             }
             
             // التعامل مع الأخطاء
@@ -786,11 +817,27 @@
                 } else {
                     video.play().then(() => {
                         playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                        welcomeMessage.style.display = 'none';
                     }).catch(err => {
                         showError('الرجاء النقر على زر التشغيل');
                     });
                 }
                 isPlaying = !isPlaying;
+            });
+            
+            // بدء التشغيل من رسالة الترحيب
+            startPlaybackBtn.addEventListener('click', function() {
+                if (currentServer) {
+                    video.play().then(() => {
+                        playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                        isPlaying = true;
+                        welcomeMessage.style.display = 'none';
+                    }).catch(err => {
+                        showError('الرجاء النقر على زر التشغيل');
+                    });
+                } else {
+                    showError('الرجاء اختيار سيرفر أولاً');
+                }
             });
             
             muteBtn.addEventListener('click', function() {
@@ -858,8 +905,5 @@
             initServerGrid();
         });
     </script>
-	<script type="text/javascript" src="//www.highperformanceformat.com/701362a8523dc1fd2e4ff3683edee7bd/invoke.js"></script>
-    <script async="async" data-cfasync="false" src="//pl27149696.profitableratecpm.com/5400c77a21ccf4abe7be1c9bcae8f38d/invoke.js"></script>
-<div id="container-5400c77a21ccf4abe7be1c9bcae8f38d"></div>
 </body>
 </html>
